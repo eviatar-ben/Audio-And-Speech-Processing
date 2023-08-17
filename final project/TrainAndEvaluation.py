@@ -65,7 +65,7 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch,
 
 
 
-def test(model, device, test_loader, criterion):
+def test(model, device, test_loader, criterion, epoch):
     print('\nevaluating...')
     model.eval()
     test_loss = 0
@@ -94,9 +94,11 @@ def test(model, device, test_loader, criterion):
         'Test set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(test_loss, avg_wer))
 
     # print a sample of the test data and decoded predictions against the true labels
-    print('Ground Truth -> Decoded Prediction')
-    for i in range(10):
-        print('{} -> {}\n'.format(decoded_targets[i], decoded_preds[i]))
+    if epoch % 10 == 0:
+        print('Ground Truth -> Decoded Prediction')
+        for i in range(10):
+            print('{} -> {}\n'.format(decoded_targets[i], decoded_preds[i]))
+
     if WB:
         wandb.log({"test_loss": test_loss})
         wandb.log({"test_wer": avg_wer})
@@ -127,4 +129,4 @@ def train_and_validation(hparams, batch_iterators):
     iter_meter = IterMeter()
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch, iter_meter)
-        test(model, device, test_loader, criterion)
+        test(model, device, test_loader, criterion, epoch)
