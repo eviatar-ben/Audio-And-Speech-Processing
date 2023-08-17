@@ -43,13 +43,13 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
                 wandb.log({"train_wer": wer_sum / len(decoded_preds)})
 
 
-def test(model, device, test_loader, criterion, epoch):
+def validation(model, device, val_loader, criterion, epoch):
     print('\nevaluating...')
     model.eval()
-    test_loss = 0
-    test_wer = []
+    val_loss = 0
+    val_wer = []
     with torch.no_grad():
-        for i, _data in enumerate(test_loader):
+        for i, _data in enumerate(val_loader):
             spectrograms, labels, input_lengths, label_lengths = _data
             spectrograms, labels = spectrograms.to(device), labels.to(device)
 
@@ -58,29 +58,33 @@ def test(model, device, test_loader, criterion, epoch):
             output = output.transpose(0, 1)  # (time, batch, n_class)
 
             loss = criterion(output, labels, torch.from_numpy(input_lengths), torch.from_numpy(label_lengths))
-            test_loss += loss.item() / len(test_loader)
+            val_loss += loss.item() / len(val_loader)
 
             decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
             for j in range(len(decoded_preds)):
-                test_wer.append(wer(decoded_targets[j], decoded_preds[j]))
+                val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
 
-    avg_wer = sum(test_wer) / len(test_wer)
-    print('Test set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(test_loss, avg_wer))
+    avg_wer = sum(val_wer) / len(val_wer)
+    # experiment.log_metric('val_loss', val_loss, step=iter_meter.get())
+    # experiment.log_metric('wer', avg_wer, step=iter_meter.get())
 
-    # print a sample of the test data and decoded predictions against the true labels
+    print(
+        'val set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(val_loss, avg_wer))
+
+    # print a sample of the val data and decoded predictions against the true labels
     if epoch % 10 == 0:
         print('Ground Truth -> Decoded Prediction')
         for i in range(10):
-            print('{} -> {}\n'.format(decoded_targets[i], decoded_preds[i]))
+            print('{} -> {}'.format(decoded_targets[i], decoded_preds[i]))
 
     if WB:
-        wandb.log({"test_loss": test_loss})
-        wandb.log({"test_wer": avg_wer})
+        wandb.log({"val_loss": val_loss})
+        wandb.log({"val_wer": avg_wer})
 
 
 def train_and_validation(hparams, batch_iterators):
     train_loader = batch_iterators[0]
-    test_loader = batch_iterators[1]
+    val_loader = batch_iterators[1]
     epochs = hparams['epochs']
 
     torch.manual_seed(7)
@@ -100,4 +104,4 @@ def train_and_validation(hparams, batch_iterators):
 
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
-        test(model, device, test_loader, criterion, epoch)
+        validation(model, device, val_loader, criterion, epoch)
