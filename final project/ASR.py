@@ -51,9 +51,9 @@ def main():
         init_w_and_b()
 
     train_batch_iterator = load_data.get_batch_iterator("train", batch_size)
-    test_batch_iterator = load_data.get_batch_iterator("test", batch_size)
     val_batch_iterator = load_data.get_batch_iterator("val", batch_size)
-    all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
+    test_batch_iterator = load_data.get_batch_iterator("test", batch_size)
+    all_iterators = [train_batch_iterator, val_batch_iterator, test_batch_iterator]
 
     TrainAndEvaluation.train_and_validation(hparams, all_iterators)
 
