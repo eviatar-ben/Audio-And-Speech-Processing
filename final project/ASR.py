@@ -10,7 +10,7 @@ RUN = 'Complex Model'
 
 learning_rate = 5e-4
 batch_size = 10
-epochs = 10
+epochs = 200
 
 hparams = {
     "n_cnn_layers": 3,
@@ -38,8 +38,8 @@ def init_w_and_b():
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": learning_rate,
-                "architecture": "CNN",
-                "dataset": "CIFAR-10",
+                "architecture": "assembly",
+                "dataset": "AN4",
                 "epochs": epochs,
 
             })
@@ -55,7 +55,7 @@ def main():
     val_batch_iterator = load_data.get_batch_iterator("val", batch_size)
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
 
-    TrainAndEvaluation.train_test_valid(hparams, all_iterators[0])
+    TrainAndEvaluation.train_and_validation(hparams, all_iterators)
 
     if WB:
         wandb.finish()
