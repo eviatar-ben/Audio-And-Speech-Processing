@@ -3,7 +3,7 @@ import torch
 import torchaudio
 import numpy as np
 import torch.nn as nn
-
+from preprocess import TextTransform
 
 class BatchIterator:
     def __init__(self, x, y, input_lengths, label_lengths, batch_size, shuffle=True):
@@ -47,69 +47,8 @@ class BatchIterator:
             raise StopIteration
 
 
-class TextTransform:
-    """Maps characters to integers and vice versa"""
-
-    def __init__(self):
-        char_map_str = """
-        ' 0
-        <SPACE> 1
-        a 2
-        b 3
-        c 4
-        d 5
-        e 6
-        f 7
-        g 8
-        h 9
-        i 10
-        j 11
-        k 12
-        l 13
-        m 14
-        n 15
-        o 16
-        p 17
-        q 18
-        r 19
-        s 20
-        t 21
-        u 22
-        v 23
-        w 24
-        x 25
-        y 26
-        z 27
-        """
-        self.char_map = {}
-        self.index_map = {}
-        for line in char_map_str.strip().split('\n'):
-            ch, index = line.split()
-            self.char_map[ch] = int(index)
-            self.index_map[int(index)] = ch
-        self.index_map[1] = ' '
-
-    def text_to_int(self, text):
-        """ Use a character map and convert text to an integer sequence """
-        int_sequence = []
-        for c in text:
-            if c == ' ':
-                ch = self.char_map['<SPACE>']
-            else:
-                ch = self.char_map[c]
-            int_sequence.append(ch)
-        return int_sequence
-
-    def int_to_text(self, labels):
-        """ Use a character map and convert integer labels to an text sequence """
-        string = []
-        for i in labels:
-            string.append(self.index_map[i])
-        return ''.join(string).replace('<SPACE>', ' ')
-
-
 def load_wavs_data(load_again=False, save=False,
-                   path=r"C:\Users\eviatar\PycharmProjects\Audio-And-Speech-Processing\final project\an4"):
+                   path=r"C:\Users\alono\OneDrive\desktop\studies\Speech\Audio-And-Speech-Processing\final project\an4"):
     text_transform = TextTransform()
 
     if not load_again:
@@ -144,7 +83,7 @@ def load_wavs_data(load_again=False, save=False,
                         # mfcc:
                         mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=13)(waveform)
                         mfcc = mfcc.squeeze(0)
-                        mfcc = mfcc.transpose(0, 1)  # todo: check if transpose is needed
+                        mfcc = mfcc.transpose(0, 1)
                         # add mfcc to y:
                         spectrogram.append(mfcc)
 
@@ -155,7 +94,7 @@ def load_wavs_data(load_again=False, save=False,
                         # add text to labels:
                         label = torch.Tensor(int_text)
                         labels.append(label)
-                        input_lengths.append(mfcc.shape[0] // 2)
+                        input_lengths.append(mfcc.shape[0] // 2) # todo why divide by 2?
                         label_lengths.append(len(label))
                     # print(file)
 
@@ -179,6 +118,6 @@ def load_wavs_data(load_again=False, save=False,
 def get_batch_iterator(data_type, batch_size=10):
     if data_type not in ["test", "train", "val"]:
         raise ValueError("data_type must be one of [test, train, val]")
-    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=False)
+    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=True, save=True)
     return BatchIterator(all_spectrogram[data_type], all_labels[data_type],
                          all_input_lengths[data_type], all_label_lengths[data_type], batch_size)
