@@ -1,8 +1,8 @@
 import TrainAndEvaluation
-import load_data
+import DataLoader
 import wandb
-from hyper_parameters import hparams
-from hyper_parameters import WB
+from HyperParameters import hparams
+from HyperParameters import WB
 
 DESCRIPTION = 'initial work'
 RUN = 'Complex Model'

@@ -3,8 +3,8 @@ import torch
 import torchaudio
 import numpy as np
 import torch.nn as nn
-from preprocess import TextTransform
-from hyper_parameters import hparams
+from Utils import TextTransform
+from HyperParameters import hparams
 
 
 class BatchIterator:
@@ -54,10 +54,10 @@ def load_wavs_data(load_again=False, save=False,
     text_transform = TextTransform()
 
     if not load_again:
-        all_spectrogram = torch.load("all_spectrogram.pt")
-        all_labels = torch.load("all_labels.pt")
-        all_input_lengths = torch.load("all_input_lengths.pt")
-        all_label_lengths = torch.load("all_label_lengths.pt")
+        all_spectrogram = torch.load("data/all_spectrogram.pt")
+        all_labels = torch.load("data/all_labels.pt")
+        all_input_lengths = torch.load("data/all_input_lengths.pt")
+        all_label_lengths = torch.load("data/all_label_lengths.pt")
         return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
     valid_file = ["test", "train", "val"]
@@ -110,10 +110,10 @@ def load_wavs_data(load_again=False, save=False,
             all_label_lengths[dir] = label_lengths
 
     if save:
-        torch.save(all_spectrogram, "all_spectrogram.pt")
-        torch.save(all_labels, "all_labels.pt")
-        torch.save(all_input_lengths, "all_input_lengths.pt")
-        torch.save(all_label_lengths, "all_label_lengths.pt")
+        torch.save(all_spectrogram, "data/all_spectrogram.pt")
+        torch.save(all_labels, "data/all_labels.pt")
+        torch.save(all_input_lengths, "data/all_input_lengths.pt")
+        torch.save(all_label_lengths, "data/all_label_lengths.pt")
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
