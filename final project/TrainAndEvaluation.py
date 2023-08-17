@@ -34,7 +34,7 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
                        100. * batch_idx / data_len, loss.item()))
             if WB:
                 wandb.log({"train_loss": loss.item()})
-                decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels,
+                decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
                                                                            label_lengths)
                 wer_sum = 0
                 for j in range(len(decoded_preds)):
@@ -60,7 +60,7 @@ def validation(model, device, val_loader, criterion, epoch):
             loss = criterion(output, labels, torch.from_numpy(input_lengths), torch.from_numpy(label_lengths))
             val_loss += loss.item() / len(val_loader)
 
-            decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
+            decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
             for j in range(len(decoded_preds)):
                 val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
 
