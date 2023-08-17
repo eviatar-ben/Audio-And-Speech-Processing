@@ -4,6 +4,8 @@ import torchaudio
 import numpy as np
 import torch.nn as nn
 from preprocess import TextTransform
+from hyper_parameters import hparams
+
 
 class BatchIterator:
     def __init__(self, x, y, input_lengths, label_lengths, batch_size, shuffle=True):
@@ -48,7 +50,7 @@ class BatchIterator:
 
 
 def load_wavs_data(load_again=False, save=False,
-                   path=r"C:\Users\alono\OneDrive\desktop\studies\Speech\Audio-And-Speech-Processing\final project\an4"):
+                   path=r".\an4"):
     text_transform = TextTransform()
 
     if not load_again:
@@ -94,7 +96,7 @@ def load_wavs_data(load_again=False, save=False,
                         # add text to labels:
                         label = torch.Tensor(int_text)
                         labels.append(label)
-                        input_lengths.append(mfcc.shape[0] // 2) # todo why divide by 2?
+                        input_lengths.append(mfcc.shape[0] // 2)  # todo why divide by 2?
                         label_lengths.append(len(label))
                     # print(file)
 
@@ -115,7 +117,7 @@ def load_wavs_data(load_again=False, save=False,
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
-def get_batch_iterator(data_type, batch_size=10):
+def get_batch_iterator(data_type, batch_size=hparams["batch_size"]):
     if data_type not in ["test", "train", "val"]:
         raise ValueError("data_type must be one of [test, train, val]")
     all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=True, save=True)

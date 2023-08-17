@@ -1,34 +1,16 @@
-import os
 import torch
 import torch.nn as nn
-import torch.utils.data as data
 import torch.optim as optim
 import torch.nn.functional as F
-import torchaudio
-import numpy as np
 import wandb
 from jiwer import wer
-
 import Model
 import preprocess
-WB = True
-
-class IterMeter(object):
-    """keeps track of total iterations"""
-
-    def __init__(self):
-        self.val = 0
-
-    def step(self):
-        self.val += 1
-
-    def get(self):
-        return self.val
+from ASR import WB
 
 
-def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch, iter_meter):
+def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch):
     model.train()
-    # with experiment.train():
     data_len = len(batch_iterator)
     for batch_idx, _data in enumerate(batch_iterator):
         spectrograms, labels, input_lengths, label_lengths = _data
@@ -37,7 +19,7 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch,
         optimizer.zero_grad()
 
         output = model(spectrograms)  # (batch, time, n_class)
-        output = F.log_softmax(output, dim=2) # using log_softmax instead of softmax for numerical stability
+        output = F.log_softmax(output, dim=2)  # using log_softmax instead of softmax for numerical stability
         output = output.transpose(0, 1)  # (time, batch, n_class)
 
         loss = criterion(output, labels, torch.from_numpy(input_lengths), torch.from_numpy(label_lengths))
@@ -45,7 +27,6 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch,
 
         optimizer.step()
         scheduler.step()
-        iter_meter.step()
 
         if batch_idx % 50 == 0 or batch_idx == data_len:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -53,14 +34,13 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch,
                        100. * batch_idx / data_len, loss.item()))
             if WB:
                 wandb.log({"train_loss": loss.item()})
-                decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
+                decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels,
+                                                                           label_lengths)
                 wer_sum = 0
                 for j in range(len(decoded_preds)):
                     wer_sum += wer(decoded_targets[j], decoded_preds[j])
 
                 wandb.log({"train_wer": wer_sum / len(decoded_preds)})
-
-
 
 
 def test(model, device, test_loader, criterion, epoch):
@@ -69,7 +49,7 @@ def test(model, device, test_loader, criterion, epoch):
     test_loss = 0
     test_wer = []
     with torch.no_grad():
-        for batch_idx, _data in enumerate(batch_iterator):
+        for i, _data in enumerate(test_loader):
             spectrograms, labels, input_lengths, label_lengths = _data
             spectrograms, labels = spectrograms.to(device), labels.to(device)
 
@@ -78,24 +58,14 @@ def test(model, device, test_loader, criterion, epoch):
             output = output.transpose(0, 1)  # (time, batch, n_class)
 
             loss = criterion(output, labels, torch.from_numpy(input_lengths), torch.from_numpy(label_lengths))
-
             test_loss += loss.item() / len(test_loader)
 
             decoded_preds, decoded_targets = preprocess.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
             for j in range(len(decoded_preds)):
                 test_wer.append(wer(decoded_targets[j], decoded_preds[j]))
-            if WB:
-                wandb.log({"test_loss": loss.item()})
 
     avg_wer = sum(test_wer) / len(test_wer)
-    # experiment.log_metric('test_loss', test_loss, step=iter_meter.get())
-    # experiment.log_metric('wer', avg_wer, step=iter_meter.get())
-    if WB:
-                wandb.log({"wer":avg_wer})
-
-
-    print(
-        'Test set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(test_loss, avg_wer))
+    print('Test set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(test_loss, avg_wer))
 
     # print a sample of the test data and decoded predictions against the true labels
     if epoch % 10 == 0:
@@ -107,6 +77,7 @@ def test(model, device, test_loader, criterion, epoch):
         wandb.log({"test_loss": test_loss})
         wandb.log({"test_wer": avg_wer})
 
+
 def train_and_validation(hparams, batch_iterators):
     train_loader = batch_iterators[0]
     test_loader = batch_iterators[1]
@@ -115,12 +86,10 @@ def train_and_validation(hparams, batch_iterators):
     torch.manual_seed(7)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
     model = Model.SpeechRecognitionModel(
         hparams['n_cnn_layers'], hparams['n_rnn_layers'], hparams['rnn_dim'],
         hparams['n_class'], hparams['n_feats'], hparams['stride'], hparams['dropout']
     ).to(device)
-
 
     optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])
     criterion = nn.CTCLoss(blank=28).to(device)
@@ -129,7 +98,6 @@ def train_and_validation(hparams, batch_iterators):
                                               epochs=hparams['epochs'],
                                               anneal_strategy='linear')
 
-    iter_meter = IterMeter()
     for epoch in range(1, epochs + 1):
-        train(model, device, train_loader, criterion, optimizer, scheduler, epoch, iter_meter)
+        train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
         test(model, device, test_loader, criterion, epoch)
