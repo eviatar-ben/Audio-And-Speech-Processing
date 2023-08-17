@@ -55,7 +55,7 @@ def main():
     val_batch_iterator = load_data.get_batch_iterator("val", batch_size)
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
 
-    TrainAndEvaluation.train_test_valid(hparams, all_iterators[0])
+    TrainAndEvaluation.train_test_valid(hparams, all_iterators)
 
     if WB:
         wandb.finish()

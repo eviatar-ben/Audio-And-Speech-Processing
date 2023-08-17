@@ -262,34 +262,33 @@ train_audio_transforms = nn.Sequential(
 
 valid_audio_transforms = torchaudio.transforms.MelSpectrogram()
 
-text_transform = TextTransform()
 
 
-def data_processing(data, data_type="train"):
-    spectrograms = []
-    labels = []
-    input_lengths = []
-    label_lengths = []
-    for (waveform, _, utterance, _, _, _) in data:
-        if data_type == 'train':
-            spec = train_audio_transforms(waveform).squeeze(0).transpose(0, 1)
-        elif data_type == 'valid':
-            spec = valid_audio_transforms(waveform).squeeze(0).transpose(0, 1)
-        else:
-            raise Exception('data_type should be train or valid')
-        spectrograms.append(spec)
-        label = torch.Tensor(text_transform.text_to_int(utterance.lower()))
-        labels.append(label)
-        input_lengths.append(spec.shape[0] // 2)
-        label_lengths.append(len(label))
+# def data_processing(data, data_type="train"):
+#     spectrograms = []
+#     labels = []
+#     input_lengths = []
+#     label_lengths = []
+#     for (waveform, _, utterance, _, _, _) in data:
+#         if data_type == 'train':
+#             spec = train_audio_transforms(waveform).squeeze(0).transpose(0, 1)
+#         elif data_type == 'valid':
+#             spec = valid_audio_transforms(waveform).squeeze(0).transpose(0, 1)
+#         else:
+#             raise Exception('data_type should be train or valid')
+#         spectrograms.append(spec)
+#         label = torch.Tensor(text_transform.text_to_int(utterance.lower()))
+#         labels.append(label)
+#         input_lengths.append(spec.shape[0] // 2)
+#         label_lengths.append(len(label))
+#
+#     spectrograms = nn.utils.rnn.pad_sequence(spectrograms, batch_first=True).unsqueeze(1).transpose(2, 3)
+#     labels = nn.utils.rnn.pad_sequence(labels, batch_first=True)
+#
+#     return spectrograms, labels, input_lengths, label_lengths
 
-    spectrograms = nn.utils.rnn.pad_sequence(spectrograms, batch_first=True).unsqueeze(1).transpose(2, 3)
-    labels = nn.utils.rnn.pad_sequence(labels, batch_first=True)
 
-    return spectrograms, labels, input_lengths, label_lengths
-
-
-def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeated=True):
+def GreedyDecoder(text_transform, output, labels, label_lengths, blank_label=28, collapse_repeated=True):
     arg_maxes = torch.argmax(output, dim=2)
     decodes = []
     targets = []

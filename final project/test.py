@@ -524,7 +524,7 @@ def main(learning_rate=5e-4, batch_size=20, epochs=10,
 
     iter_meter = IterMeter()
     for epoch in range(1, epochs + 1):
-        train(model, device, train_loader, criterion, optimizer, scheduler, epoch, iter_meter)
+        # train(model, device, train_loader, criterion, optimizer, scheduler, epoch, iter_meter)
         test(model, device, test_loader, criterion, epoch, iter_meter)
 
 
