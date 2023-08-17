@@ -53,7 +53,7 @@ def load_wavs_data(load_again=False, save=False,
                    path=r".\an4"):
     text_transform = TextTransform()
 
-    if not load_again:
+    if load_again:
         all_spectrogram = torch.load("data/all_spectrogram.pt")
         all_labels = torch.load("data/all_labels.pt")
         all_input_lengths = torch.load("data/all_input_lengths.pt")

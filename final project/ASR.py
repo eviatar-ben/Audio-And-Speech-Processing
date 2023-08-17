@@ -35,9 +35,9 @@ def main():
         wandb.login()
         init_w_and_b()
 
-    train_batch_iterator = load_data.get_batch_iterator("train", hparams["batch_size"])
-    test_batch_iterator = load_data.get_batch_iterator("test", hparams["batch_size"])
-    val_batch_iterator = load_data.get_batch_iterator("val", hparams["batch_size"])
+    train_batch_iterator = DataLoader.get_batch_iterator("train", hparams["batch_size"])
+    test_batch_iterator = DataLoader.get_batch_iterator("test", hparams["batch_size"])
+    val_batch_iterator = DataLoader.get_batch_iterator("val", hparams["batch_size"])
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
 
     TrainAndEvaluation.train_and_validation(hparams, all_iterators)
