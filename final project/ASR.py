@@ -1,24 +1,24 @@
 import TrainAndEvaluation
 import DataLoader
 import wandb
-from HyperParameters import hparams
-from HyperParameters import WB
+
+import HyperParameters
 
 DESCRIPTION = 'initial work'
 RUN = 'Complex Model'
 
 
-def init_w_and_b():
-    epochs = hparams['epochs']
-    learning_rate = hparams['learning_rate']
+def init_w_and_b(hyper_params):
+    epochs = hyper_params['epochs']
+    learning_rate = hyper_params['learning_rate']
 
-    if WB:
+    if HyperParameters.WB:
         wandb.init(
             # Set the project where this run will be logged
             group="Complex Model initial work",
             project="ASR",
             # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-            name=f"{DESCRIPTION}{RUN}_{hparams}_epochs",
+            name=f"{DESCRIPTION}{RUN}_{hyper_params}",
             notes='checking if log is work properly',
             # Track hyperparameters and run metadata
             config={
@@ -30,21 +30,36 @@ def init_w_and_b():
             })
 
 
-def main():
-    if WB:
+def run_deep_speech():
+    if HyperParameters.WB:
         wandb.login()
-        init_w_and_b()
+        init_w_and_b(HyperParameters.deep_speech_hparams)
 
-    train_batch_iterator = DataLoader.get_batch_iterator("train", hparams["batch_size"])
-    test_batch_iterator = DataLoader.get_batch_iterator("test", hparams["batch_size"])
-    val_batch_iterator = DataLoader.get_batch_iterator("val", hparams["batch_size"])
+    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
+    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
+    val_batch_iterator = DataLoader.get_batch_iterator("val",  HyperParameters.deep_speech_hparams["batch_size"])
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
+    TrainAndEvaluation.deep_speech_train_and_validation( HyperParameters.deep_speech_hparams, all_iterators)
 
-    TrainAndEvaluation.train_and_validation(hparams, all_iterators)
+    if  HyperParameters.WB:
+        wandb.finish()
 
-    if WB:
+
+def run_cnn():
+    if  HyperParameters.WB:
+        wandb.login()
+        init_w_and_b( HyperParameters.res_cnn_hparams)
+
+    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
+    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
+    val_batch_iterator = DataLoader.get_batch_iterator("val", HyperParameters.deep_speech_hparams["batch_size"])
+    all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
+    TrainAndEvaluation.res_cnn_train_and_validation(HyperParameters.deep_speech_hparams, all_iterators)
+
+    if HyperParameters.WB:
         wandb.finish()
 
 
 if __name__ == '__main__':
-    main()
+    # run_deep_speech()
+    run_cnn()
