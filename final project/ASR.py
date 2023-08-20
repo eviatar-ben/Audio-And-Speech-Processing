@@ -30,36 +30,22 @@ def init_w_and_b(hyper_params):
             })
 
 
-def run_deep_speech():
+def run_model(hparams):
     if HyperParameters.WB:
         wandb.login()
-        init_w_and_b(HyperParameters.deep_speech_hparams)
+        init_w_and_b(hparams)
 
-    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
-    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
-    val_batch_iterator = DataLoader.get_batch_iterator("val",  HyperParameters.deep_speech_hparams["batch_size"])
+    train_batch_iterator = DataLoader.get_batch_iterator("train",
+                                                         hparams["batch_size"])
+    test_batch_iterator = DataLoader.get_batch_iterator("test", hparams["batch_size"])
+    val_batch_iterator = DataLoader.get_batch_iterator("val", hparams["batch_size"])
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
-    TrainAndEvaluation.deep_speech_train_and_validation( HyperParameters.deep_speech_hparams, all_iterators)
-
-    if  HyperParameters.WB:
-        wandb.finish()
-
-
-def run_cnn():
-    if  HyperParameters.WB:
-        wandb.login()
-        init_w_and_b( HyperParameters.res_cnn_hparams)
-
-    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
-    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
-    val_batch_iterator = DataLoader.get_batch_iterator("val", HyperParameters.deep_speech_hparams["batch_size"])
-    all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
-    TrainAndEvaluation.res_cnn_train_and_validation(HyperParameters.deep_speech_hparams, all_iterators)
-
-    if HyperParameters.WB:
-        wandb.finish()
+    TrainAndEvaluation.train_and_validation(hparams, all_iterators)
 
 
 if __name__ == '__main__':
-    # run_deep_speech()
-    run_cnn()
+
+    # run_model(HyperParameters.res_cnn_hparams)
+    # run_model(HyperParameters.transformer_hparams)
+    # run_model(HyperParameters.rnn_hparams)
+    run_model(HyperParameters.deep_speech_hparams)
