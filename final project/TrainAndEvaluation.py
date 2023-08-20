@@ -6,7 +6,7 @@ import wandb
 from jiwer import wer
 import Model
 import Utils
-from ASR import WB
+from HyperParameters import WB
 
 
 def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch):
@@ -65,8 +65,6 @@ def validation(model, device, val_loader, criterion, epoch):
                 val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
 
     avg_wer = sum(val_wer) / len(val_wer)
-    # experiment.log_metric('val_loss', val_loss, step=iter_meter.get())
-    # experiment.log_metric('wer', avg_wer, step=iter_meter.get())
 
     print(
         'val set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(val_loss, avg_wer))
@@ -82,7 +80,30 @@ def validation(model, device, val_loader, criterion, epoch):
         wandb.log({"val_wer": avg_wer})
 
 
-def train_and_validation(hparams, batch_iterators):
+def res_cnn_train_and_validation(hparams, batch_iterators):
+    train_loader = batch_iterators[0]
+    val_loader = batch_iterators[1]
+    epochs = hparams['epochs']
+
+    torch.manual_seed(7)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = Model.ResCNN(hparams['n_cnn_layers'], hparams['n_class'], hparams['n_feats'],
+                         hparams['stride'], hparams['dropout']).to(device)
+
+    optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])
+    criterion = nn.CTCLoss(blank=28).to(device)
+    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=hparams['learning_rate'],
+                                              steps_per_epoch=len(train_loader),  # todo: check if this is correct
+                                              epochs=hparams['epochs'],
+                                              anneal_strategy='linear')
+
+    for epoch in range(1, epochs + 1):
+        train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
+        validation(model, device, val_loader, criterion, epoch)
+
+
+def deep_speech_train_and_validation(hparams, batch_iterators):
     train_loader = batch_iterators[0]
     val_loader = batch_iterators[1]
     epochs = hparams['epochs']

@@ -4,7 +4,7 @@ import torchaudio
 import numpy as np
 import torch.nn as nn
 from Utils import TextTransform
-from HyperParameters import hparams
+from HyperParameters import deep_speech_hparams
 
 
 class BatchIterator:
@@ -117,9 +117,9 @@ def load_wavs_data(load_again=False, save=False,
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
-def get_batch_iterator(data_type, batch_size=hparams["batch_size"]):
+def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"]):
     if data_type not in ["test", "train", "val"]:
         raise ValueError("data_type must be one of [test, train, val]")
-    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=True, save=True)
+    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True)
     return BatchIterator(all_spectrogram[data_type], all_labels[data_type],
                          all_input_lengths[data_type], all_label_lengths[data_type], batch_size)
