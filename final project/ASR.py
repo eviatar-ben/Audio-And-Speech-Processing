@@ -36,7 +36,7 @@ def run_model(hparams):
         init_w_and_b(hparams)
 
     train_batch_iterator = DataLoader.get_batch_iterator("train",
-                                                         hparams["batch_size"])
+                                                         hparams["batch_size"], augmentations=hparams["augmentations"])
     test_batch_iterator = DataLoader.get_batch_iterator("test", hparams["batch_size"])
     val_batch_iterator = DataLoader.get_batch_iterator("val", hparams["batch_size"])
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
@@ -48,4 +48,7 @@ if __name__ == '__main__':
     # run_model(HyperParameters.res_cnn_hparams)
     # run_model(HyperParameters.transformer_hparams)
     # run_model(HyperParameters.rnn_hparams)
-    run_model(HyperParameters.deep_speech_hparams)
+    # run_model(HyperParameters.deep_speech_hparams)
+    # run_model(HyperParameters.listen_attend_spell_hparams)
+    # run_model(HyperParameters.rnnt_hparams)
+    run_model(HyperParameters.multiTransformer_hparams)

@@ -1,11 +1,7 @@
-import os
-import torch
+
 import torch.nn as nn
-import torch.utils.data as data
-import torch.optim as optim
 import torch.nn.functional as F
-import torchaudio
-import numpy as np
+import torch
 
 
 class ResCNN(nn.Module):
@@ -28,6 +24,7 @@ class ResCNN(nn.Module):
         x = x.transpose(1, 2)
         x = self.fully_connected(x)
         return x
+
 
 class CNNLayerNorm(nn.Module):
     """Layer normalization built for cnns input"""
@@ -113,6 +110,38 @@ class ResCNNTransformer(nn.Module):
         x = self.fully_connected(x)
         return x
 
+
+class ResCNNMultiTransformer(nn.Module):
+    """
+    the same as ResCNNTransformer but with multiple parallel transformers
+    """
+    def __init__(self, n_cnn_layers, n_class, n_feats, dropout=0.1):
+        super(ResCNNMultiTransformer, self).__init__()
+        n_feats = n_feats // 2 + 1
+        self.cnn = nn.Conv2d(1, 32, 3, stride=2, padding=3 // 2)  # cnn for extracting heirachal features
+        self.rescnn_layers = nn.Sequential(*[
+            ResBlock(32, 32, kernel=3, stride=1, dropout=dropout, n_feats=n_feats)
+            for _ in range(n_cnn_layers)
+        ])
+        self.transformer1 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
+        self.transformer2 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
+        self.transformer3 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
+        self.fully_connected = nn.Linear(n_feats * 32 * 3, n_class)
+
+    def forward(self, x):
+        x = self.cnn(x)
+        x = self.rescnn_layers(x)
+        sizes = x.size()
+        x = x.view(sizes[0], sizes[1] * sizes[2], sizes[3])  # (batch, feature, time)
+        x = x.transpose(1, 2)  # (batch, time, feature)
+        x1 = self.transformer1(x, x)
+        x2 = self.transformer2(x, x)
+        x3 = self.transformer3(x, x)
+        x = torch.cat((x1, x2, x3), dim=2)
+        x = self.fully_connected(x)
+        return x
+
+
 class RNN(nn.Module):
     def __init__(self, n_cnn_layers, n_class, n_feats, dropout=0.1, hidden_size=128, num_layers=2):
         super(RNN, self).__init__()
@@ -189,6 +218,10 @@ def init_model(hparams):
         model = DeepSpeechModel(n_cnn_layers=hparams['n_cnn_layers'], n_rnn_layers=hparams['n_rnn_layers'],
                                 rnn_dim=hparams['rnn_dim'], n_class=hparams['n_class'],
                                 n_feats=hparams['n_feats'], stride=hparams['stride'], dropout=hparams['dropout'])
+    elif hparams['model_name'] == 'multiTransformer':
+        model = ResCNNMultiTransformer(n_cnn_layers=hparams['n_cnn_layers'], n_class=hparams['n_class'],
+                                       n_feats=hparams['n_feats'], dropout=hparams['dropout'])
+
     else:
         raise NotImplementedError
     return model

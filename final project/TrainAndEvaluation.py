@@ -91,6 +91,7 @@ def train_and_validation(hparams, batch_iterators):
     model = Model.init_model(hparams).to(device)
 
     optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])
+
     criterion = nn.CTCLoss(blank=28).to(device)
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=hparams['learning_rate'],
                                               steps_per_epoch=len(train_loader),

@@ -14,6 +14,7 @@ res_cnn_hparams = {
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
+    "augmentations": True,
     "model_name": "res_cnn"
 }
 
@@ -25,6 +26,7 @@ transformer_hparams = {
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
+    "augmentations": True,
     "model_name": "transformer"
 }
 
@@ -36,6 +38,7 @@ rnn_hparams = {
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
+    "augmentations": True,
     "model_name": "rnn"
 }
 
@@ -50,5 +53,19 @@ deep_speech_hparams = {
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
+    "augmentations": True,
     "model_name": "deep_speech"
+}
+
+multiTransformer_hparams = {
+    "n_cnn_layers": 3,
+    "n_class": 29,
+    "n_feats": 13,
+    "dropout": 0.1,
+    "learning_rate": learning_rate,
+    "batch_size": batch_size,
+    "epochs": epochs,
+    "augmentations": True,
+    "model_name": "multiTransformer"
+
 }
