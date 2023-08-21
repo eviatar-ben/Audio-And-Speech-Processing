@@ -81,9 +81,16 @@ def validation(model, device, val_loader, criterion, epoch):
 
 
 def train_and_validation(hparams, batch_iterators):
+    from HyperParameters import delta, delta_delta
+
     train_loader = batch_iterators[0]
     val_loader = batch_iterators[1]
     epochs = hparams['epochs']
+
+    if delta_delta:
+        hparams['n_feats'] *= 3
+    elif delta:
+        hparams['n_feats'] *= 2
 
     torch.manual_seed(1)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -91,6 +98,7 @@ def train_and_validation(hparams, batch_iterators):
     model = Model.init_model(hparams).to(device)
 
     optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])
+
     criterion = nn.CTCLoss(blank=28).to(device)
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=hparams['learning_rate'],
                                               steps_per_epoch=len(train_loader),
@@ -100,34 +108,4 @@ def train_and_validation(hparams, batch_iterators):
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
 
-        validation(model, device, val_loader, criterion, epoch)
-
-
-def deep_speech_train_and_validation(hparams, batch_iterators):
-    train_loader = batch_iterators[0]
-    val_loader = batch_iterators[1]
-    epochs = hparams['epochs']
-
-    torch.manual_seed(7)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    feats = hparams['n_feats']
-    if hparams['delta_delta']:
-        feats *= 3
-    elif hparams['delta']:
-        feats *= 2
-
-    model = Model.SpeechRecognitionModel(
-        hparams['n_cnn_layers'], hparams['n_rnn_layers'], hparams['rnn_dim'],
-        hparams['n_class'], feats, hparams['stride'], hparams['dropout']
-    ).to(device)
-
-    optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])
-    criterion = nn.CTCLoss(blank=28).to(device)
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=hparams['learning_rate'],
-                                              steps_per_epoch=len(train_loader),  # todo: check if this is correct
-                                              epochs=hparams['epochs'],
-                                              anneal_strategy='linear')
-
-    for epoch in range(1, epochs + 1):
-        train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
         validation(model, device, val_loader, criterion, epoch)
