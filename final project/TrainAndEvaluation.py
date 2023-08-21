@@ -28,19 +28,21 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
         optimizer.step()
         scheduler.step()
 
-        if batch_idx % 50 == 0 or batch_idx == data_len:
+        if batch_idx % 50 == 0 or batch_idx == data_len - 1:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(spectrograms), data_len,
                        100. * batch_idx / data_len, loss.item()))
-            if WB:
-                wandb.log({"train_loss": loss.item()})
-                decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
-                                                                      label_lengths)
-                wer_sum = 0
-                for j in range(len(decoded_preds)):
-                    wer_sum += wer(decoded_targets[j], decoded_preds[j])
 
-                wandb.log({"train_wer": wer_sum / len(decoded_preds)})
+        # log to wandb once every epoch:
+        if batch_idx == data_len - 1 and WB:
+            wandb.log({"train_loss": loss.item()}, step=epoch)
+            decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
+                                                                  label_lengths)
+            wer_sum = 0
+            for j in range(len(decoded_preds)):
+                wer_sum += wer(decoded_targets[j], decoded_preds[j])
+
+            wandb.log({"train_wer": wer_sum / len(decoded_preds)}, step=epoch)
 
 
 def validation(model, device, val_loader, criterion, epoch):
@@ -76,8 +78,8 @@ def validation(model, device, val_loader, criterion, epoch):
             print('{} -> {}'.format(decoded_targets[i], decoded_preds[i]))
 
     if WB:
-        wandb.log({"val_loss": val_loss})
-        wandb.log({"val_wer": avg_wer})
+        wandb.log({"val_loss": val_loss}, step=epoch)
+        wandb.log({"val_wer": avg_wer}, step=epoch)
 
 
 def train_and_validation(hparams, batch_iterators):
