@@ -1,4 +1,4 @@
-WB = True
+WB = False
 
 learning_rate = 5e-4
 batch_size = 10
@@ -10,7 +10,10 @@ deep_speech_hparams = {
     "rnn_dim": 128,
     "n_class": 29,
     "n_feats": 13,
+    "delta": False,
+    "delta_delta": False,
     "stride": 2,
+
     "dropout": 0.1,
     "learning_rate": learning_rate,
     "batch_size": batch_size,

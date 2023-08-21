@@ -4,6 +4,7 @@ import torchaudio
 import numpy as np
 import torch.nn as nn
 from Utils import TextTransform
+from Utils import TextTransform
 from HyperParameters import deep_speech_hparams
 
 
@@ -49,6 +50,17 @@ class BatchIterator:
             raise StopIteration
 
 
+# def plot_spectrogram(spc):
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+#     from matplotlib import cm
+#     fig, ax = plt.subplots()
+#     mfcc = np.swapaxes(spc, 0, 1)
+#     cax = ax.imshow(mfcc, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+#     ax.set_title('MFCC')
+#     plt.show()
+
+
 def load_wavs_data(load_again=False, save=False,
                    path=r".\an4"):
     text_transform = TextTransform()
@@ -83,9 +95,33 @@ def load_wavs_data(load_again=False, save=False,
                         # load wav:
                         waveform, sample_rate = torchaudio.load(os.path.join(root2_wav, wav))
                         # mfcc:
-                        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=13)(waveform)
+                        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate,
+                                                          n_mfcc=deep_speech_hparams["n_feats"])(waveform)
+
                         mfcc = mfcc.squeeze(0)
                         mfcc = mfcc.transpose(0, 1)
+
+                        # plot mfcc:
+                        # plot_spectrogram(mfcc)
+                        # normalize mfcc:
+                        mfcc = (mfcc - mfcc.mean()) / mfcc.std()
+                        # plot normalized mfcc:
+                        # plot_spectrogram(mfcc)
+
+                        # add delta to mfcc:
+                        if deep_speech_hparams["delta"]:
+                            mfcc_delta = torchaudio.transforms.ComputeDeltas()(mfcc)
+                            mfcc = torch.cat((mfcc, mfcc_delta), dim=1)
+
+                            # add delta delta to mfcc:
+                            if deep_speech_hparams["delta_delta"]:
+                                mfcc_delta_delta = torchaudio.transforms.ComputeDeltas()(mfcc_delta)
+                                mfcc = torch.cat((mfcc, mfcc_delta, mfcc_delta_delta), dim=1)
+
+                            mfcc = torch.cat((mfcc, mfcc_delta), dim=1)
+
+                        # plot mfcc with delta:
+                        # plot_spectrogram(mfcc)
                         # add mfcc to y:
                         spectrogram.append(mfcc)
 
@@ -117,9 +153,13 @@ def load_wavs_data(load_again=False, save=False,
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
-def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"]):
-    if data_type not in ["test", "train", "val"]:
-        raise ValueError("data_type must be one of [test, train, val]")
+def get_batch_iterator(batch_size=deep_speech_hparams["batch_size"]):
     all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True)
-    return BatchIterator(all_spectrogram[data_type], all_labels[data_type],
-                         all_input_lengths[data_type], all_label_lengths[data_type], batch_size)
+
+    train_iter = BatchIterator(all_spectrogram["train"], all_labels["train"],
+                               all_input_lengths["train"], all_label_lengths["train"], batch_size)
+    test_iter = BatchIterator(all_spectrogram["test"], all_labels["test"],
+                              all_input_lengths["test"], all_label_lengths["test"], batch_size)
+    val_iter = BatchIterator(all_spectrogram["val"], all_labels["val"],
+                             all_input_lengths["val"], all_label_lengths["val"], batch_size)
+    return train_iter, test_iter, val_iter

@@ -35,25 +35,19 @@ def run_deep_speech():
         wandb.login()
         init_w_and_b(HyperParameters.deep_speech_hparams)
 
-    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
-    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
-    val_batch_iterator = DataLoader.get_batch_iterator("val",  HyperParameters.deep_speech_hparams["batch_size"])
-    all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
-    TrainAndEvaluation.deep_speech_train_and_validation( HyperParameters.deep_speech_hparams, all_iterators)
+    all_iterators = DataLoader.get_batch_iterator(HyperParameters.deep_speech_hparams["batch_size"])
+    TrainAndEvaluation.deep_speech_train_and_validation(HyperParameters.deep_speech_hparams, all_iterators)
 
-    if  HyperParameters.WB:
+    if HyperParameters.WB:
         wandb.finish()
 
 
 def run_cnn():
-    if  HyperParameters.WB:
+    if HyperParameters.WB:
         wandb.login()
-        init_w_and_b( HyperParameters.res_cnn_hparams)
+        init_w_and_b(HyperParameters.res_cnn_hparams)
 
-    train_batch_iterator = DataLoader.get_batch_iterator("train", HyperParameters.deep_speech_hparams["batch_size"])
-    test_batch_iterator = DataLoader.get_batch_iterator("test", HyperParameters.deep_speech_hparams["batch_size"])
-    val_batch_iterator = DataLoader.get_batch_iterator("val", HyperParameters.deep_speech_hparams["batch_size"])
-    all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
+    all_iterators = DataLoader.get_batch_iterator(HyperParameters.deep_speech_hparams["batch_size"])
     TrainAndEvaluation.res_cnn_train_and_validation(HyperParameters.deep_speech_hparams, all_iterators)
 
     if HyperParameters.WB:

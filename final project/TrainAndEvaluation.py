@@ -35,7 +35,7 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
             if WB:
                 wandb.log({"train_loss": loss.item()})
                 decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
-                                                                           label_lengths)
+                                                                      label_lengths)
                 wer_sum = 0
                 for j in range(len(decoded_preds)):
                     wer_sum += wer(decoded_targets[j], decoded_preds[j])
@@ -110,10 +110,15 @@ def deep_speech_train_and_validation(hparams, batch_iterators):
 
     torch.manual_seed(7)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    feats = hparams['n_feats']
+    if hparams['delta_delta']:
+        feats *= 3
+    elif hparams['delta']:
+        feats *= 2
 
     model = Model.SpeechRecognitionModel(
         hparams['n_cnn_layers'], hparams['n_rnn_layers'], hparams['rnn_dim'],
-        hparams['n_class'], hparams['n_feats'], hparams['stride'], hparams['dropout']
+        hparams['n_class'], feats, hparams['stride'], hparams['dropout']
     ).to(device)
 
     optimizer = optim.AdamW(model.parameters(), hparams['learning_rate'])

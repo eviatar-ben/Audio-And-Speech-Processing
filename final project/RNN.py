@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 
+
 class RNN(nn.Module):
     def __init__(self, input_dim, output_dim, rnn_units=128):
         super(RNN, self).__init__()
