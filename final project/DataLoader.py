@@ -126,16 +126,19 @@ def load_wavs_data(load_again=False, save=False,
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
-def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"], augmentations=False):
-    if data_type not in ["test", "train", "val"]:
-        raise ValueError("data_type must be one of [test, train, val]")
+def get_batch_iterator(batch_size=deep_speech_hparams["batch_size"], augmentations=False):
     all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True)
 
-    batch_iterator = BatchIterator(all_spectrogram[data_type], all_labels[data_type],
-                                   all_input_lengths[data_type], all_label_lengths[data_type], batch_size,
+    test_iterator = BatchIterator(all_spectrogram["test"], all_labels["test"],
+                                  all_input_lengths["test"], all_label_lengths["test"], batch_size,
+                                  augmentation=apply_augmentations if augmentations else None)
+    train_iterator = BatchIterator(all_spectrogram["train"], all_labels["train"],
+                                   all_input_lengths["train"], all_label_lengths["train"], batch_size,
                                    augmentation=apply_augmentations if augmentations else None)
-
-    return batch_iterator
+    val_iterator = BatchIterator(all_spectrogram["val"], all_labels["val"],
+                                 all_input_lengths["val"], all_label_lengths["val"], batch_size,
+                                 augmentation=apply_augmentations if augmentations else None)
+    return train_iterator, test_iterator, val_iterator
 
 
 def apply_augmentations(data, input_lengths, augmentation_prob=0.5):
