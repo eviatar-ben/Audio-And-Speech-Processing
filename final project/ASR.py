@@ -30,10 +30,10 @@ def init_w_and_b(hyper_params):
             })
 
 
-def run_deep_speech():
+def run_model(hparams):
     if HyperParameters.WB:
         wandb.login()
-        init_w_and_b(HyperParameters.deep_speech_hparams)
+        init_w_and_b(hparams)
 
     all_iterators = DataLoader.get_batch_iterator(HyperParameters.deep_speech_hparams["batch_size"])
     TrainAndEvaluation.deep_speech_train_and_validation(HyperParameters.deep_speech_hparams, all_iterators)
@@ -54,6 +54,10 @@ def run_cnn():
         wandb.finish()
 
 
+
 if __name__ == '__main__':
-    # run_deep_speech()
-    run_cnn()
+
+    # run_model(HyperParameters.res_cnn_hparams)
+    # run_model(HyperParameters.transformer_hparams)
+    # run_model(HyperParameters.rnn_hparams)
+    run_model(HyperParameters.deep_speech_hparams)
