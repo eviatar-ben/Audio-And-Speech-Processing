@@ -135,8 +135,8 @@ def apply_augmentations(data, input_lengths, augmentation_prob=0.5):
     augmented_data = []
     freq_mask_param = 27
     time_mask_param = 80
-    warp_transform = transforms.RandomApply([torchaudio.transforms.TimeStretch()],
-                                            p=augmentation_prob)
+    # warp_transform = transforms.RandomApply([torchaudio.transforms.TimeStretch()],
+    #                                         p=augmentation_prob)
     freq_mask_transform = transforms.RandomApply([torchaudio.transforms.FrequencyMasking(freq_mask_param)],
                                                  p=augmentation_prob)
     time_mask_transform = transforms.RandomApply([torchaudio.transforms.TimeMasking(time_mask_param)],
@@ -144,12 +144,13 @@ def apply_augmentations(data, input_lengths, augmentation_prob=0.5):
 
     for idx, item in enumerate(data):
         if random.random() < augmentation_prob:
-            item = warp_transform(item)
+            # rate = random.uniform(0.7, 1.3)
+            # item = warp_transform(item, fixed_rate=rate)
             item = freq_mask_transform(item)
             item = time_mask_transform(item)
         augmented_data.append(item)
 
-    augmented_data = nn.utils.rnn.pad_sequence(augmented_data, batch_first=True).unsqueeze(
-        1).transpose(2, 3)
+    # convert the list to a tensor
+    augmented_data = torch.stack(augmented_data)
 
     return augmented_data, input_lengths

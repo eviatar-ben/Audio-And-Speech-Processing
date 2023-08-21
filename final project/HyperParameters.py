@@ -53,7 +53,7 @@ deep_speech_hparams = {
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
-    "augmentations": True,
+    "augmentations": False,
     "model_name": "deep_speech"
 }
 
