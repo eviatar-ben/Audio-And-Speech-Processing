@@ -64,7 +64,7 @@ class TextTransform:
 
 text_transform = TextTransform()
 
-
+@torch.no_grad()
 def greedy_decoder(output, labels, label_lengths, blank_label=28, collapse_repeated=True):
     """
     Greedy Decoder. Decodes the output of the network by picking the label with the highest probability at each time step.

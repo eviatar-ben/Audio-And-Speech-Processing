@@ -43,17 +43,18 @@ rnn_hparams = {
 }
 
 deep_speech_hparams = {
-    "n_cnn_layers": 3,
-    "n_rnn_layers": 2,
+    "n_cnn_layers": 4,
+    "n_rnn_layers": 3,
     "rnn_dim": 128,
     "n_class": 29,
-    "n_feats": 13,
+    "feat_type": "mel_spectrogram",
+    "n_feats": 40,
     "stride": 2,
     "dropout": 0.1,
     "learning_rate": learning_rate,
     "batch_size": batch_size,
     "epochs": epochs,
-    "augmentations": False,
+    "augmentations": True,
     "model_name": "deep_speech"
 }
 

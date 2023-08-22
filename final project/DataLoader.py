@@ -52,8 +52,7 @@ class BatchIterator:
             raise StopIteration
 
 
-def load_wavs_data(load_again=False, save=False,
-                   path=r".\an4"):
+def load_wavs_data(load_again=False, save=False, path=r".\an4",feat_type = 'mfcc', n_feats=13):
     text_transform = TextTransform()
 
     if load_again:
@@ -86,11 +85,20 @@ def load_wavs_data(load_again=False, save=False,
                         # load wav:
                         waveform, sample_rate = torchaudio.load(os.path.join(root2_wav, wav))
                         # mfcc:
-                        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=13)(waveform)
-                        mfcc = mfcc.squeeze(0)
-                        mfcc = mfcc.transpose(0, 1)
+                        if feat_type == 'mfcc':
+                            feats = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=n_feats)(waveform)
+                            feats = feats.squeeze(0)
+                            feats = feats.transpose(0, 1)
+                        elif feat_type == 'mel_spectrogram':
+                            feats = torchaudio.transforms.MelSpectrogram(sample_rate=sample_rate, n_mels=n_feats)(waveform)
+                            feats = feats.squeeze(0)
+                            feats = feats.transpose(0, 1)
+                        elif feat_type == 'gammatone':
+                            feats = torchaudio.transforms.Gammatone(sample_rate=sample_rate, n_mels=n_feats)(waveform)
+                            feats = feats.squeeze(0)
+                            feats = feats.transpose(0, 1)
                         # add mfcc to y:
-                        spectrogram.append(mfcc)
+                        spectrogram.append(feats)
 
                         # load txt:
                         with open(os.path.join(root2, file), 'r') as f:
@@ -99,7 +107,7 @@ def load_wavs_data(load_again=False, save=False,
                         # add text to labels:
                         label = torch.Tensor(int_text)
                         labels.append(label)
-                        input_lengths.append(mfcc.shape[0] // 2)  # todo why divide by 2?
+                        input_lengths.append(feats.shape[0] // 2)
                         label_lengths.append(len(label))
                     # print(file)
 
@@ -120,10 +128,10 @@ def load_wavs_data(load_again=False, save=False,
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
-def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"], augmentations=False):
+def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"],feat_type='mfcc',n_feats=13, augmentations=False):
     if data_type not in ["test", "train", "val"]:
         raise ValueError("data_type must be one of [test, train, val]")
-    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True)
+    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True,feat_type=feat_type, n_feats=n_feats)
 
     batch_iterator = BatchIterator(all_spectrogram[data_type], all_labels[data_type],
                          all_input_lengths[data_type], all_label_lengths[data_type], batch_size, augmentation=apply_augmentations if augmentations else None)

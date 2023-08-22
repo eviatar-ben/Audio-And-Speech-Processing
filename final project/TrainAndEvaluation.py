@@ -10,6 +10,7 @@ from HyperParameters import WB
 
 
 def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch):
+    total_train_loss = 0
     model.train()
     data_len = len(batch_iterator)
     for batch_idx, _data in enumerate(batch_iterator):
@@ -28,6 +29,8 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
         optimizer.step()
         scheduler.step()
 
+        total_train_loss += loss.item()
+
         if batch_idx % 50 == 0 or batch_idx == data_len-1:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(spectrograms), data_len,
@@ -35,14 +38,14 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
 
         # log to wandb once every epoch:
         if batch_idx == data_len-1 and WB:
-            wandb.log({"train_loss": loss.item()}, step=epoch )
+            wandb.log({"train_loss": total_train_loss / data_len}, step=epoch)
             decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
                                                                        label_lengths)
             wer_sum = 0
             for j in range(len(decoded_preds)):
                 wer_sum += wer(decoded_targets[j], decoded_preds[j])
 
-            wandb.log({"train_wer": wer_sum / len(decoded_preds)}, step=epoch)
+            wandb.log({"train_wer (on last batch)": wer_sum / len(decoded_preds)}, step=epoch)
 
 
 def validation(model, device, val_loader, criterion, epoch):
