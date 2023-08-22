@@ -82,4 +82,3 @@ def greedy_decoder(output, labels, label_lengths, blank_label=28, collapse_repea
                 decode.append(index.item())
         decodes.append(text_transform.int_to_text(decode))
     return decodes, targets
-

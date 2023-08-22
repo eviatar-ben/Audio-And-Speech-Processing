@@ -35,6 +35,7 @@ def run_model(hparams):
         wandb.login()
         init_w_and_b(hparams)
 
+<<<<<<< HEAD
     train_batch_iterator = DataLoader.get_batch_iterator("train",
                                                          hparams["batch_size"],
                                                          augmentations=hparams["augmentations"],
@@ -46,12 +47,14 @@ def run_model(hparams):
     val_batch_iterator = DataLoader.get_batch_iterator("val", hparams["batch_size"],
                                                        feat_type=hparams["feat_type"],
                                                        n_feats=hparams["n_feats"])
+=======
+    train_batch_iterator, test_batch_iterator, val_batch_iterator = DataLoader.get_batch_iterator(hparams["batch_size"])
+>>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
     TrainAndEvaluation.train_and_validation(hparams, all_iterators)
-
+fi
 
 if __name__ == '__main__':
-
     # run_model(HyperParameters.res_cnn_hparams)
     # run_model(HyperParameters.transformer_hparams)
     # run_model(HyperParameters.rnn_hparams)

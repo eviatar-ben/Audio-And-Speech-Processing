@@ -7,6 +7,8 @@ from Utils import TextTransform
 from HyperParameters import deep_speech_hparams
 import torchvision.transforms as transforms
 import random
+from HyperParameters import delta, delta_delta
+
 
 class BatchIterator:
     def __init__(self, x, y, input_lengths, label_lengths, batch_size, shuffle=True, augmentation=None):
@@ -85,6 +87,7 @@ def load_wavs_data(load_again=False, save=False, path=r".\an4",feat_type = 'mfcc
                         # load wav:
                         waveform, sample_rate = torchaudio.load(os.path.join(root2_wav, wav))
                         # mfcc:
+<<<<<<< HEAD
                         if feat_type == 'mfcc':
                             feats = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=n_feats)(waveform)
                             feats = feats.squeeze(0)
@@ -97,6 +100,15 @@ def load_wavs_data(load_again=False, save=False, path=r".\an4",feat_type = 'mfcc
                             feats = torchaudio.transforms.Gammatone(sample_rate=sample_rate, n_mels=n_feats)(waveform)
                             feats = feats.squeeze(0)
                             feats = feats.transpose(0, 1)
+=======
+                        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=13)(waveform)
+                        mfcc = mfcc.squeeze(0)
+                        mfcc = mfcc.transpose(0, 1)
+                        if delta:
+                            mfcc_delta = torchaudio.transforms.ComputeDeltas()(mfcc)
+                            # mfcc_delta_delta = torchaudio.transforms.ComputeDeltas()(mfcc_delta)
+                            mfcc = torch.cat((mfcc, mfcc_delta), dim=1)
+>>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
                         # add mfcc to y:
                         spectrogram.append(feats)
 
@@ -128,15 +140,26 @@ def load_wavs_data(load_again=False, save=False, path=r".\an4",feat_type = 'mfcc
     return all_spectrogram, all_labels, all_input_lengths, all_label_lengths
 
 
+<<<<<<< HEAD
 def get_batch_iterator(data_type, batch_size=deep_speech_hparams["batch_size"],feat_type='mfcc',n_feats=13, augmentations=False):
     if data_type not in ["test", "train", "val"]:
         raise ValueError("data_type must be one of [test, train, val]")
     all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True,feat_type=feat_type, n_feats=n_feats)
+=======
+def get_batch_iterator(batch_size=deep_speech_hparams["batch_size"], augmentations=False):
+    all_spectrogram, all_labels, all_input_lengths, all_label_lengths = load_wavs_data(load_again=False, save=True)
+>>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
 
-    batch_iterator = BatchIterator(all_spectrogram[data_type], all_labels[data_type],
-                         all_input_lengths[data_type], all_label_lengths[data_type], batch_size, augmentation=apply_augmentations if augmentations else None)
-
-    return batch_iterator
+    test_iterator = BatchIterator(all_spectrogram["test"], all_labels["test"],
+                                  all_input_lengths["test"], all_label_lengths["test"], batch_size,
+                                  augmentation=apply_augmentations if augmentations else None)
+    train_iterator = BatchIterator(all_spectrogram["train"], all_labels["train"],
+                                   all_input_lengths["train"], all_label_lengths["train"], batch_size,
+                                   augmentation=apply_augmentations if augmentations else None)
+    val_iterator = BatchIterator(all_spectrogram["val"], all_labels["val"],
+                                 all_input_lengths["val"], all_label_lengths["val"], batch_size,
+                                 augmentation=apply_augmentations if augmentations else None)
+    return train_iterator, test_iterator, val_iterator
 
 
 def apply_augmentations(data, input_lengths, augmentation_prob=0.5):
