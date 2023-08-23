@@ -114,3 +114,5 @@ def train_and_validation(hparams, batch_iterators):
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
         validation(model, device, val_loader, criterion, epoch)
+
+    return model

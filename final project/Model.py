@@ -202,6 +202,7 @@ class DeepSpeechModel(nn.Module):
         return x
 
 
+
 def init_model(hparams):
     """
     initialize a model based on the hyperparameters
@@ -225,4 +226,13 @@ def init_model(hparams):
 
     else:
         raise NotImplementedError
+    return model
+
+def save_model(model, path, hparams):
+    torch.save(model.state_dict(), path)
+    torch.save(hparams, path + "_hparams")
+
+def load_model(model_path, hparams_path):
+    model = init_model(torch.load(hparams_path))
+    model.load_state_dict(torch.load(model_path))
     return model
