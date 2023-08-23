@@ -6,7 +6,7 @@ import wandb
 from jiwer import wer, cer
 import Model
 import Utils
-from HyperParameters import WB
+from HyperParameters import WB, batch_size
 
 
 def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch):
@@ -83,7 +83,7 @@ def validation(model, device, val_loader, criterion, epoch):
     # print a sample of the val data and decoded predictions against the true labels
     if epoch % 10 == 0:
         print('Ground Truth -> Decoded Prediction')
-        for i in range(10):
+        for i in range(batch_size):
             print('{} -> {}'.format(decoded_targets[i], decoded_preds[i]))
 
     if WB:
@@ -113,6 +113,8 @@ def train_and_validation(hparams, batch_iterators):
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
         validation(model, device, val_loader, criterion, epoch)
+
+    return model
 
 
 def test_epoch(model, device, test_loader, criterion, epoch):
@@ -147,7 +149,7 @@ def test_epoch(model, device, test_loader, criterion, epoch):
     # print a sample of the test data and decoded predictions against the true labels
     if epoch % 10 == 0:
         print('Ground Truth -> Decoded Prediction')
-        for i in range(10):
+        for i in range(batch_size):
             print('{} -> {}'.format(decoded_targets[i], decoded_preds[i]))
 
     if WB:
@@ -156,7 +158,7 @@ def test_epoch(model, device, test_loader, criterion, epoch):
         wandb.log({"test_cer": avg_cer}, step=epoch)
 
 
-def test(hparams, test_batch_iterator, model, save=True):
+def test(hparams, test_batch_iterator, model):
     epochs = hparams['epochs']
 
     torch.manual_seed(1)
@@ -168,6 +170,4 @@ def test(hparams, test_batch_iterator, model, save=True):
         # break
         test_epoch(model, device, test_batch_iterator, criterion, epoch)
 
-    if save:
-        torch.save(model.state_dict(), 'data/model.pt')
     return model

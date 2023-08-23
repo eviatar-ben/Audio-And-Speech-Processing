@@ -47,7 +47,7 @@ def run_model(hparams):
     return TrainAndEvaluation.train_and_validation(hparams, all_iterators)
 
 
-def test_model(hparams, model):
+def test_model(model, hparams,):
     if HyperParameters.WB:
         wandb.login()
         init_w_and_b(hparams)
@@ -60,22 +60,16 @@ def test_model(hparams, model):
 
 
 if __name__ == '__main__':
-    # run_model(HyperParameters.res_cnn_hparams)
-    # run_model(HyperParameters.transformer_hparams)
-    # run_model(HyperParameters.rnn_hparams)
-    # run_model(HyperParameters.multiTransformer_hparams)
-    # run_model(HyperParameters.deep_speech_hparams)
-    # test_model(HyperParameters.res_cnn_hparams)
+    hparams = HyperParameters.deep_speech_hparams
 
 
-    # try to load a model
     try:
-        model = load_model("deep_speech_model", "deep_speech_model_hparams")
+        model = load_model(f"{hparams['model_name']}_model", f"{hparams['model_name']}_hparams")
         print("loaded model")
     except:
         print("could not load model")
-        model = run_model(HyperParameters.deep_speech_hparams)
-        save_model(model, "deep_speech_model", HyperParameters.deep_speech_hparams)
-    test_model(model)
+        model = run_model(hparams)
+        save_model(model, f"{hparams['model_name']}_model", HyperParameters.deep_speech_hparams)
+    test_model(model, HyperParameters.deep_speech_hparams)
 
 

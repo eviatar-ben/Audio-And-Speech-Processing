@@ -1,8 +1,8 @@
-WB = False
+WB = True
 
 learning_rate = 5e-4
 batch_size = 10
-epochs = 5
+epochs = 300
 
 res_cnn_hparams = {
     "n_cnn_layers": 4,
