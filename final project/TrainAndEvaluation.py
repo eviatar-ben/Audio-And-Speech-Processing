@@ -114,6 +114,7 @@ def train_and_validation(hparams, batch_iterators):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
         validation(model, device, val_loader, criterion, epoch)
 
+<<<<<<< HEAD
 
 def test_epoch(model, device, test_loader, criterion, epoch):
     print('\nevaluating...')
@@ -170,3 +171,4 @@ def test(hparams, test_batch_iterator, model, save=True):
 
     if save:
         torch.save(model.state_dict(), 'data/model.pt')
+    return model

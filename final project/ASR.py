@@ -1,7 +1,7 @@
 import TrainAndEvaluation
 import DataLoader
 import wandb
-
+from Model import save_model, load_model
 import HyperParameters
 
 
@@ -44,7 +44,7 @@ def run_model(hparams):
                                                        feat_type=hparams["feat_type"],
                                                        n_feats=hparams["n_feats"])
     all_iterators = [train_batch_iterator, test_batch_iterator, val_batch_iterator]
-    TrainAndEvaluation.train_and_validation(hparams, all_iterators)
+    return TrainAndEvaluation.train_and_validation(hparams, all_iterators)
 
 
 def test_model(hparams, model):
@@ -66,4 +66,16 @@ if __name__ == '__main__':
     # run_model(HyperParameters.multiTransformer_hparams)
     # run_model(HyperParameters.deep_speech_hparams)
     # test_model(HyperParameters.res_cnn_hparams)
-    test_model()
+
+
+    # try to load a model
+    try:
+        model = load_model("deep_speech_model", "deep_speech_model_hparams")
+        print("loaded model")
+    except:
+        print("could not load model")
+        model = run_model(HyperParameters.deep_speech_hparams)
+        save_model(model, "deep_speech_model", HyperParameters.deep_speech_hparams)
+    test_model(model)
+
+
