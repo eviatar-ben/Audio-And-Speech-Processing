@@ -1,3 +1,4 @@
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -6,7 +7,7 @@ import torch
 class ResCNN(nn.Module):
     def __init__(self, n_cnn_layers, n_class, n_feats, stride=2, dropout=0.1):
         super(ResCNN, self).__init__()
-        n_feats = n_feats // 2 + 1
+        n_feats = n_feats // 2 + (n_feats%2)
         self.cnn = nn.Conv2d(1, 32, 3, stride=stride,
                              padding=3 // 2)  # cnn for extracting heirachal features
         self.rescnn_layers = nn.Sequential(*[
@@ -90,14 +91,13 @@ class BidirectionalGRU(nn.Module):
 class ResCNNTransformer(nn.Module):
     def __init__(self, n_cnn_layers, n_class, n_feats, dropout=0.1):
         super(ResCNNTransformer, self).__init__()
-        n_feats = n_feats // 2 + 1
+        n_feats = n_feats // 2 + (n_feats%2)
         self.cnn = nn.Conv2d(1, 32, 3, stride=2, padding=3 // 2)  # cnn for extracting heirachal features
         self.rescnn_layers = nn.Sequential(*[
             ResBlock(32, 32, kernel=3, stride=1, dropout=dropout, n_feats=n_feats)
             for _ in range(n_cnn_layers)
         ])
-        self.transformer = nn.Transformer(nhead=4, num_encoder_layers=6, num_decoder_layers=6, dropout=dropout,
-                                          d_model=n_feats * 32)
+        self.transformer = nn.Transformer(nhead=4, num_encoder_layers=6, num_decoder_layers=6, dropout=dropout, d_model=n_feats * 32)
         self.fully_connected = nn.Linear(n_feats * 32, n_class)
 
     def forward(self, x):
@@ -115,21 +115,17 @@ class ResCNNMultiTransformer(nn.Module):
     """
     the same as ResCNNTransformer but with multiple parallel transformers
     """
-
     def __init__(self, n_cnn_layers, n_class, n_feats, dropout=0.1):
         super(ResCNNMultiTransformer, self).__init__()
-        n_feats = n_feats // 2 + 1
+        n_feats = n_feats // 2 + (n_feats%2)
         self.cnn = nn.Conv2d(1, 32, 3, stride=2, padding=3 // 2)  # cnn for extracting heirachal features
         self.rescnn_layers = nn.Sequential(*[
             ResBlock(32, 32, kernel=3, stride=1, dropout=dropout, n_feats=n_feats)
             for _ in range(n_cnn_layers)
         ])
-        self.transformer1 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout,
-                                           d_model=n_feats * 32)
-        self.transformer2 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout,
-                                           d_model=n_feats * 32)
-        self.transformer3 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout,
-                                           d_model=n_feats * 32)
+        self.transformer1 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
+        self.transformer2 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
+        self.transformer3 = nn.Transformer(nhead=2, num_encoder_layers=4, num_decoder_layers=4, dropout=dropout, d_model=n_feats * 32)
         self.fully_connected = nn.Linear(n_feats * 32 * 3, n_class)
 
     def forward(self, x):
@@ -149,14 +145,13 @@ class ResCNNMultiTransformer(nn.Module):
 class RNN(nn.Module):
     def __init__(self, n_cnn_layers, n_class, n_feats, dropout=0.1, hidden_size=128, num_layers=2):
         super(RNN, self).__init__()
-        n_feats = n_feats // 2 + 1
+        n_feats = n_feats // 2 + (n_feats%2)
         self.cnn = nn.Conv2d(1, 32, 3, stride=2, padding=3 // 2)
         self.rescnn_layers = nn.Sequential(*[
             ResBlock(32, 32, kernel=3, stride=1, dropout=dropout, n_feats=n_feats)
             for _ in range(n_cnn_layers)
         ])
-        self.rnn = nn.RNN(input_size=n_feats * 32, hidden_size=hidden_size, num_layers=num_layers, batch_first=True,
-                          dropout=dropout)
+        self.rnn = nn.RNN(input_size=n_feats * 32, hidden_size=hidden_size, num_layers=num_layers, batch_first=True, dropout=dropout)
         self.fully_connected = nn.Linear(hidden_size, n_class)
 
     def forward(self, x):
@@ -169,17 +164,12 @@ class RNN(nn.Module):
         x = self.fully_connected(x)
         return x
 
-
 class DeepSpeechModel(nn.Module):
 
     def __init__(self, n_cnn_layers, n_rnn_layers, rnn_dim, n_class, n_feats, stride=2, dropout=0.1):
         super(DeepSpeechModel, self).__init__()
-<<<<<<< HEAD
 
         n_feats = n_feats // 2 + (n_feats%2)
-=======
-        n_feats = n_feats // 2
->>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
         self.cnn = nn.Conv2d(1, 32, 3, stride=stride, padding=3 // 2)  # cnn for extracting heirachal features
 
         # n residual cnn layers with filter size of 32

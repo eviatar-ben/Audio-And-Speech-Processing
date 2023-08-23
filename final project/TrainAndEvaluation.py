@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import wandb
-from jiwer import wer
+from jiwer import wer, cer
 import Model
 import Utils
 from HyperParameters import WB
@@ -29,32 +29,26 @@ def train(model, device, batch_iterator, criterion, optimizer, scheduler, epoch)
         optimizer.step()
         scheduler.step()
 
-<<<<<<< HEAD
         total_train_loss += loss.item()
 
         if batch_idx % 50 == 0 or batch_idx == data_len-1:
-=======
-        if batch_idx % 50 == 0 or batch_idx == data_len - 1:
->>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(spectrograms), data_len,
                        100. * batch_idx / data_len, loss.item()))
 
         # log to wandb once every epoch:
-<<<<<<< HEAD
         if batch_idx == data_len-1 and WB:
             wandb.log({"train_loss": total_train_loss / data_len}, step=epoch)
-=======
-        if batch_idx == data_len - 1 and WB:
-            wandb.log({"train_loss": loss.item()}, step=epoch)
->>>>>>> 36175764f82f32e6964e4f9d23c92ce32015bdd9
             decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels,
-                                                                  label_lengths)
+                                                                       label_lengths)
             wer_sum = 0
+            cer_sum = 0
             for j in range(len(decoded_preds)):
                 wer_sum += wer(decoded_targets[j], decoded_preds[j])
+                cer_sum += cer(decoded_targets[j], decoded_preds[j])
 
             wandb.log({"train_wer (on last batch)": wer_sum / len(decoded_preds)}, step=epoch)
+            wandb.log({"train_cer (on last batch)": cer_sum / len(decoded_preds)}, step=epoch)
 
 
 def validation(model, device, val_loader, criterion, epoch):
@@ -62,6 +56,7 @@ def validation(model, device, val_loader, criterion, epoch):
     model.eval()
     val_loss = 0
     val_wer = []
+    val_cer = []
     with torch.no_grad():
         for i, _data in enumerate(val_loader):
             spectrograms, labels, input_lengths, label_lengths = _data
@@ -77,8 +72,10 @@ def validation(model, device, val_loader, criterion, epoch):
             decoded_preds, decoded_targets = Utils.greedy_decoder(output.transpose(0, 1), labels, label_lengths)
             for j in range(len(decoded_preds)):
                 val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
+                val_cer.append(cer(decoded_targets[j], decoded_preds[j]))
 
     avg_wer = sum(val_wer) / len(val_wer)
+    avg_cer = sum(val_cer) / len(val_cer)
 
     print(
         'val set: Average loss: {:.4f}, Average WER: {:.4f}\n'.format(val_loss, avg_wer))
@@ -90,21 +87,16 @@ def validation(model, device, val_loader, criterion, epoch):
             print('{} -> {}'.format(decoded_targets[i], decoded_preds[i]))
 
     if WB:
-        wandb.log({"val_loss": val_loss}, step=epoch)
+        wandb.log({"val_loss": val_loss},step=epoch)
         wandb.log({"val_wer": avg_wer}, step=epoch)
+        wandb.log({"val_cer": avg_cer}, step=epoch)
+
 
 
 def train_and_validation(hparams, batch_iterators):
-    from HyperParameters import delta, delta_delta
-
     train_loader = batch_iterators[0]
     val_loader = batch_iterators[1]
     epochs = hparams['epochs']
-
-    if delta_delta:
-        hparams['n_feats'] *= 3
-    elif delta:
-        hparams['n_feats'] *= 2
 
     torch.manual_seed(1)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -121,5 +113,4 @@ def train_and_validation(hparams, batch_iterators):
 
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, criterion, optimizer, scheduler, epoch)
-
         validation(model, device, val_loader, criterion, epoch)
